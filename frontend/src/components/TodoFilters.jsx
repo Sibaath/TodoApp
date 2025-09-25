@@ -1,43 +1,13 @@
 import React from 'react';
-import { TodoFilter, TodoSort } from '../types/todo';
 import { Search, Filter, Import as SortAsc, Dessert as SortDesc, X } from 'lucide-react';
 
-interface TodoFiltersProps {
-  filter: TodoFilter;
-  sort: TodoSort;
-  onFilterChange: (filter: TodoFilter) => void;
-  onSortChange: (sort: TodoSort) => void;
-  categories: string[];
-  totalCount: number;
-  filteredCount: number;
-}
+const TodoFilters = ({ filter, sort, onFilterChange, onSortChange, categories, totalCount, filteredCount }) => {
+  const handleStatusFilter = (status) => onFilterChange({ ...filter, status });
+  const handlePriorityFilter = (priority) => onFilterChange({ ...filter, priority: priority === filter.priority ? undefined : priority });
+  const handleCategoryFilter = (category) => onFilterChange({ ...filter, category: category === filter.category ? undefined : category });
+  const handleSearchChange = (search) => onFilterChange({ ...filter, search });
 
-const TodoFilters: React.FC<TodoFiltersProps> = ({
-  filter,
-  sort,
-  onFilterChange,
-  onSortChange,
-  categories,
-  totalCount,
-  filteredCount
-}) => {
-  const handleStatusFilter = (status: TodoFilter['status']) => {
-    onFilterChange({ ...filter, status });
-  };
-
-  const handlePriorityFilter = (priority: TodoFilter['priority']) => {
-    onFilterChange({ ...filter, priority: priority === filter.priority ? undefined : priority });
-  };
-
-  const handleCategoryFilter = (category: string) => {
-    onFilterChange({ ...filter, category: category === filter.category ? undefined : category });
-  };
-
-  const handleSearchChange = (search: string) => {
-    onFilterChange({ ...filter, search });
-  };
-
-  const handleSortChange = (field: TodoSort['field']) => {
+  const handleSortChange = (field) => {
     if (sort.field === field) {
       onSortChange({ field, direction: sort.direction === 'asc' ? 'desc' : 'asc' });
     } else {
@@ -45,19 +15,12 @@ const TodoFilters: React.FC<TodoFiltersProps> = ({
     }
   };
 
-  const clearFilters = () => {
-    onFilterChange({
-      status: 'all',
-      priority: undefined,
-      category: undefined,
-      search: ''
-    });
-  };
+  const clearFilters = () => onFilterChange({ status: 'all', priority: undefined, category: undefined, search: '' });
 
   const hasActiveFilters = filter.status !== 'all' || filter.priority || filter.category || filter.search;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+    <div className="bg-white rounded-xl shadow-lg p-6 space-y-6 sticky top-20"> {/* Added sticky for better UX */}
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
@@ -72,18 +35,15 @@ const TodoFilters: React.FC<TodoFiltersProps> = ({
 
       {/* Status Filters */}
       <div>
-        <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-          <Filter size={16} />
-          Status
-        </h3>
+        <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2"><Filter size={16} />Status</h3>
         <div className="flex flex-wrap gap-2">
-          {(['all', 'active', 'completed'] as const).map((status) => (
+          {(['all', 'active', 'completed']).map((status) => (
             <button
               key={status}
               onClick={() => handleStatusFilter(status)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize ${
                 filter.status === status
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -97,13 +57,13 @@ const TodoFilters: React.FC<TodoFiltersProps> = ({
       <div>
         <h3 className="text-sm font-medium text-gray-700 mb-3">Priority</h3>
         <div className="flex flex-wrap gap-2">
-          {(['high', 'medium', 'low'] as const).map((priority) => (
+          {(['high', 'medium', 'low']).map((priority) => (
             <button
               key={priority}
               onClick={() => handlePriorityFilter(priority)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors capitalize flex items-center gap-2 ${
                 filter.priority === priority
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -127,7 +87,7 @@ const TodoFilters: React.FC<TodoFiltersProps> = ({
                 onClick={() => handleCategoryFilter(category)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter.category === category
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -143,17 +103,17 @@ const TodoFilters: React.FC<TodoFiltersProps> = ({
         <h3 className="text-sm font-medium text-gray-700 mb-3">Sort By</h3>
         <div className="flex flex-wrap gap-2">
           {([
-            { field: 'created_at' as const, label: 'Created' },
-            { field: 'due_date' as const, label: 'Due Date' },
-            { field: 'priority' as const, label: 'Priority' },
-            { field: 'title' as const, label: 'Title' }
+            { field: 'created_at', label: 'Created' },
+            { field: 'due_date', label: 'Due Date' },
+            { field: 'priority', label: 'Priority' },
+            { field: 'title', label: 'Title' }
           ]).map(({ field, label }) => (
             <button
               key={field}
               onClick={() => handleSortChange(field)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
                 sort.field === field
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -169,13 +129,13 @@ const TodoFilters: React.FC<TodoFiltersProps> = ({
       {/* Results Summary and Clear Filters */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
         <div className="text-sm text-gray-600">
-          Showing {filteredCount} of {totalCount} tasks
+          Showing <span className="font-bold">{filteredCount}</span> of <span className="font-bold">{totalCount}</span> tasks
         </div>
         
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 transition-colors"
           >
             <X size={16} />
             Clear Filters

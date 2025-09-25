@@ -1,29 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Todo } from '../types/todo';
-import { validateTodo } from '../utils/todoUtils';
+import React, { useState } from 'react';
 import { Plus, X, Calendar, Flag, Tag } from 'lucide-react';
+import { validateTodo } from '../utils/todoUtils';
 
-interface TodoFormProps {
-  onSubmit: (todo: Omit<Todo, 'id' | 'created_at' | 'updated_at' | 'order_index'>) => Promise<{ success: boolean; error?: string }>;
-  onCancel?: () => void;
-  initialData?: Partial<Todo>;
-  isEditing?: boolean;
-}
-
-const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, isEditing = false }) => {
+const TodoForm = ({ onSubmit, onCancel, initialData, isEditing = false }) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
     due_date: initialData?.due_date || '',
-    priority: initialData?.priority || 'medium' as Todo['priority'],
+    priority: initialData?.priority || 'medium',
     category: initialData?.category || '',
-    status: initialData?.status || 'active' as Todo['status']
+    status: initialData?.status || 'active'
   });
 
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const validation = validateTodo(formData);
@@ -39,17 +31,9 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
       const result = await onSubmit(formData);
       if (result.success) {
         if (!isEditing) {
-          // Reset form for new todos
-          setFormData({
-            title: '',
-            description: '',
-            due_date: '',
-            priority: 'medium',
-            category: '',
-            status: 'active'
-          });
+          setFormData({ title: '', description: '', due_date: '', priority: 'medium', category: '', status: 'active' });
         }
-        onCancel?.();
+        onCancel && onCancel();
       } else {
         setErrors([result.error || 'Failed to save todo']);
       }
@@ -60,25 +44,18 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
     }
   };
 
-  const handleChange = (field: keyof typeof formData, value: string) => {
+  const handleChange = (field, value) => { 
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear errors when user starts typing
-    if (errors.length > 0) {
-      setErrors([]);
-    }
+    if (errors.length > 0) setErrors([]);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-          Task Title *
-        </label>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">Task Title <span className="text-red-500">*</span></label>
         <input
-          type="text"
-          id="title"
-          value={formData.title}
+          type="text" id="title" value={formData.title}
           onChange={(e) => handleChange('title', e.target.value)}
           placeholder="What needs to be done?"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -88,15 +65,11 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
 
       {/* Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-          Description
-        </label>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">Description</label>
         <textarea
-          id="description"
-          value={formData.description}
+          id="description" value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
-          placeholder="Add more details about this task..."
-          rows={3}
+          placeholder="Add more details about this task..." rows={3}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
           maxLength={1000}
         />
@@ -106,14 +79,9 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Due Date */}
         <div>
-          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2">
-            <Calendar className="inline w-4 h-4 mr-1" />
-            Due Date
-          </label>
+          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2"><Calendar className="inline w-4 h-4 mr-1" />Due Date</label>
           <input
-            type="date"
-            id="due_date"
-            value={formData.due_date}
+            type="date" id="due_date" value={formData.due_date}
             onChange={(e) => handleChange('due_date', e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
@@ -121,13 +89,9 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
 
         {/* Priority */}
         <div>
-          <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
-            <Flag className="inline w-4 h-4 mr-1" />
-            Priority
-          </label>
+          <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2"><Flag className="inline w-4 h-4 mr-1" />Priority</label>
           <select
-            id="priority"
-            value={formData.priority}
+            id="priority" value={formData.priority}
             onChange={(e) => handleChange('priority', e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
@@ -139,14 +103,9 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
 
         {/* Category */}
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-            <Tag className="inline w-4 h-4 mr-1" />
-            Category
-          </label>
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2"><Tag className="inline w-4 h-4 mr-1" />Category</label>
           <input
-            type="text"
-            id="category"
-            value={formData.category}
+            type="text" id="category" value={formData.category}
             onChange={(e) => handleChange('category', e.target.value)}
             placeholder="e.g., Work, Personal"
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -162,9 +121,7 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
             <div>
               <h3 className="text-sm font-medium text-red-800">Please fix the following errors:</h3>
               <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
-                {errors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
+                {errors.map((error, index) => (<li key={index}>{error}</li>))}
               </ul>
             </div>
           </div>
@@ -174,22 +131,18 @@ const TodoForm: React.FC<TodoFormProps> = ({ onSubmit, onCancel, initialData, is
       {/* Actions */}
       <div className="flex gap-3 pt-4">
         <button
-          type="submit"
-          disabled={isSubmitting}
+          type="submit" disabled={isSubmitting}
           className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
           {isSubmitting ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-          ) : (
-            <Plus className="w-5 h-5 mr-2" />
-          )}
+          ) : (<Plus className="w-5 h-5 mr-2" />)}
           {isSubmitting ? 'Saving...' : (isEditing ? 'Update Task' : 'Add Task')}
         </button>
         
         {onCancel && (
           <button
-            type="button"
-            onClick={onCancel}
+            type="button" onClick={onCancel}
             className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
           >
             Cancel

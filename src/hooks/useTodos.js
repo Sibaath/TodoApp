@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Todo, TodoFilter, TodoSort } from '../types/todo';
 import { useSupabase } from './useSupabase';
 
 export const useTodos = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const [todos, setTodos] = useState([]); 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null); 
   const supabase = useSupabase();
 
   const fetchTodos = useCallback(async () => {
@@ -25,16 +24,11 @@ export const useTodos = () => {
     }
   }, [supabase]);
 
-  const addTodo = useCallback(async (todoData: Omit<Todo, 'id' | 'created_at' | 'updated_at' | 'order_index'>) => {
+  const addTodo = useCallback(async (todoData) => { 
     try {
-      const { data, error } = await supabase
-        .from('todos')
-        .insert([todoData]);
-
+      const { data, error } = await supabase.from('todos').insert([todoData]);
       if (error) throw error;
-      if (data) {
-        setTodos(prev => [data[0], ...prev]);
-      }
+      if (data) setTodos(prev => [data[0], ...prev]);
       return { success: true, data: data?.[0] };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to add todo';
@@ -43,13 +37,9 @@ export const useTodos = () => {
     }
   }, [supabase]);
 
-  const updateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
+  const updateTodo = useCallback(async (id, updates) => { 
     try {
-      const { data, error } = await supabase
-        .from('todos')
-        .update(updates)
-        .eq('id', id);
-
+      const { data, error } = await supabase.from('todos').update(updates).eq('id', id);
       if (error) throw error;
       if (data) {
         setTodos(prev => prev.map(todo => 
@@ -64,13 +54,9 @@ export const useTodos = () => {
     }
   }, [supabase]);
 
-  const deleteTodo = useCallback(async (id: string) => {
+  const deleteTodo = useCallback(async (id) => { 
     try {
-      const { error } = await supabase
-        .from('todos')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('todos').delete().eq('id', id);
       if (error) throw error;
       setTodos(prev => prev.filter(todo => todo.id !== id));
       return { success: true };
@@ -81,7 +67,7 @@ export const useTodos = () => {
     }
   }, [supabase]);
 
-  const toggleTodo = useCallback(async (id: string) => {
+  const toggleTodo = useCallback(async (id) => { 
     const todo = todos.find(t => t.id === id);
     if (!todo) return { success: false, error: 'Todo not found' };
 
@@ -89,22 +75,13 @@ export const useTodos = () => {
     return updateTodo(id, { status: newStatus });
   }, [todos, updateTodo]);
 
-  const reorderTodos = useCallback(async (reorderedTodos: Todo[]) => {
-    try {
-      // Update order_index for all todos
-      const updates = reorderedTodos.map((todo, index) => ({
+  const reorderTodos = useCallback(async (reorderedTodos) => { 
+    setTodos(reorderedTodos.map((todo, index) => ({
         ...todo,
         order_index: index,
         updated_at: new Date().toISOString()
-      }));
-
-      setTodos(updates);
-      return { success: true };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to reorder todos';
-      setError(message);
-      return { success: false, error: message };
-    }
+    })));
+    return { success: true };
   }, []);
 
   useEffect(() => {
