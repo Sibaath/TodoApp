@@ -6,11 +6,10 @@ const AuthScreen = ({ login, startSignup, completeSignup, authError }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [usernameInput, setUsernameInput] = useState('');
     const [passwordInput, setPasswordInput] = useState('');
-    
-    // State for the challenge received from the backend
     const [challengeData, setChallengeData] = useState(null);
     const [challengeAnswer, setChallengeAnswer] = useState('');
     const [localError, setLocalError] = useState('');
+
 
     const resetForm = () => {
         setIsLoading(false);
@@ -71,8 +70,8 @@ const AuthScreen = ({ login, startSignup, completeSignup, authError }) => {
     const displayError = localError || authError;
 
     return (
-        <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl animate-in fade-in zoom-in duration-500">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">{isLogin ? 'Welcome Back' : 'Join Aura Task'}</h2>
+        <div className="w-full max-w-md bg-slate-800 border border-slate-700 p-8 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+            <h2 className="text-3xl font-bold text-white mb-6 text-center">{isLogin ? 'Welcome Back' : 'Join Aura Task'}</h2>
 
             {!challengeData ? (
                 <form onSubmit={handleAuthSubmit} className="space-y-5">
@@ -81,7 +80,8 @@ const AuthScreen = ({ login, startSignup, completeSignup, authError }) => {
                         placeholder="Username"
                         value={usernameInput}
                         onChange={(e) => setUsernameInput(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        // ✅ FIX: Classes for dark background and light text
+                        className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         disabled={isLoading}
                     />
                     <input
@@ -89,23 +89,24 @@ const AuthScreen = ({ login, startSignup, completeSignup, authError }) => {
                         placeholder="Password"
                         value={passwordInput}
                         onChange={(e) => setPasswordInput(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        // ✅ FIX: Classes for dark background and light text
+                        className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         disabled={isLoading}
                     />
-                    {displayError && <p className="text-red-500 text-sm text-center">{displayError}</p>}
+                    {displayError && <p className="text-red-400 text-sm text-center">{displayError}</p>}
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg flex items-center justify-center disabled:bg-gray-400"
+                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg flex items-center justify-center disabled:bg-slate-600"
                     >
                         {isLoading ? <Loader2 className="animate-spin" /> : (isLogin ? 'Login' : 'Continue to Challenge')}
                     </button>
                 </form>
             ) : (
-                <form onSubmit={handleChallengeSubmit} className="space-y-5 p-4 border border-blue-200 rounded-lg bg-blue-50">
-                    <h3 className="text-xl font-semibold text-blue-800 flex items-center gap-2"><HardHat size={20} /> Bot Check</h3>
-                    <p className="text-gray-700">Solve the puzzle to prove you're human:</p>
-                    <div className="text-2xl font-bold text-center py-2 text-gray-800">
+                <form onSubmit={handleChallengeSubmit} className="space-y-5 p-4 border border-blue-800 rounded-lg bg-slate-900">
+                    <h3 className="text-xl font-semibold text-blue-400 flex items-center gap-2"><HardHat size={20} /> Bot Check</h3>
+                    <p className="text-slate-400">Solve the puzzle to prove you're human:</p>
+                    <div className="text-2xl font-bold text-center py-2 text-white">
                         {challengeData.num1} &times; {challengeData.num2} = ?
                     </div>
                     <input
@@ -113,24 +114,21 @@ const AuthScreen = ({ login, startSignup, completeSignup, authError }) => {
                         placeholder="Your Answer"
                         value={challengeAnswer}
                         onChange={(e) => setChallengeAnswer(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-center text-lg"
+                        // ✅ FIX: Classes for dark background and light text
+                        className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-slate-100 placeholder:text-slate-500 focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-lg"
                         required
                         disabled={isLoading}
                     />
-                    {displayError && <p className="text-red-500 text-sm text-center">{displayError}</p>}
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-all shadow-lg flex items-center justify-center disabled:bg-gray-400"
-                    >
+                    {displayError && <p className="text-red-400 text-sm text-center">{displayError}</p>}
+                    <button type="submit" disabled={isLoading} className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 ...">
                         {isLoading ? <Loader2 className="animate-spin" /> : 'Verify & Sign Up'}
                     </button>
                 </form>
             )}
 
-            <p className="text-center text-sm mt-6 text-gray-500">
+            <p className="text-center text-sm mt-6 text-slate-400">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}
-                <button onClick={toggleMode} className="text-blue-600 hover:underline ml-1 font-medium" disabled={isLoading}>
+                <button onClick={toggleMode} className="text-blue-500 hover:underline ml-1 font-medium" disabled={isLoading}>
                     {isLogin ? 'Sign Up' : 'Login'}
                 </button>
             </p>

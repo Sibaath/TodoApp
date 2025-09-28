@@ -1,7 +1,5 @@
 import React from 'react';
 import { BarChart, Loader2 } from 'lucide-react';
-
-// This component now receives pre-calculated stats
 const DashboardScreen = ({ stats, loading }) => {
     // Destructure the stats from the prop
     const { completedCount, activeCount, highPriorityCount } = stats;
@@ -20,36 +18,31 @@ const DashboardScreen = ({ stats, loading }) => {
         );
     }
     
+    
     return (
         <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 space-y-8 animate-in fade-in">
-            <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-3"><BarChart size={24} /> Dashboard Overview</h2>
+            <h2 className="text-3xl font-bold text-white flex items-center gap-3"><BarChart size={24} /> Dashboard Overview</h2>
             
             {totalCount === 0 ? (
-                 <div className="text-center p-12 bg-white rounded-xl shadow-lg">
-                    <p className="text-xl text-gray-600">Start adding tasks to see your stats!</p>
+                 <div className="text-center p-12 bg-slate-800 border border-slate-700 rounded-xl shadow-lg">
+                    <p className="text-xl text-slate-400">Start adding tasks to see your stats!</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Stat Card 1: Total */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border-b-4 border-blue-500">
-                        <p className="text-sm font-medium text-gray-500">Active Tasks</p>
-                        <p className="text-4xl font-bold text-gray-900 mt-1">{activeCount}</p>
+                    <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                        <p className="text-sm font-medium text-slate-400">Active Tasks</p>
+                        <p className="text-4xl font-bold text-blue-400 mt-1">{activeCount}</p>
                     </div>
-
-                    {/* Stat Card 2: Completed */}
-                    <div className="bg-white p-6 rounded-xl shadow-lg border-b-4 border-green-500">
-                        <p className="text-sm font-medium text-gray-500">Tasks Completed</p>
-                        <p className="text-4xl font-bold text-gray-900 mt-1">{completedCount}</p>
+                    <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                        <p className="text-sm font-medium text-slate-400">Tasks Completed</p>
+                        <p className="text-4xl font-bold text-green-400 mt-1">{completedCount}</p>
                     </div>
-
-                    {/* Stat Card 3: High Priority */}
-                     <div className="bg-white p-6 rounded-xl shadow-lg border-b-4 border-red-500">
-                        <p className="text-sm font-medium text-gray-500">High Priority</p>
-                        <p className="text-4xl font-bold text-gray-900 mt-1">{highPriorityCount}</p>
+                     <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-lg">
+                        <p className="text-sm font-medium text-slate-400">High Priority</p>
+                        <p className="text-4xl font-bold text-red-400 mt-1">{highPriorityCount}</p>
                     </div>
                 </div>
             )}
-            {/* The rest of the component can stay as is, but should ideally use all stats from the backend */}
         </div>
     );
 };
