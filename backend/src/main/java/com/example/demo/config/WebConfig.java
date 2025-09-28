@@ -9,10 +9,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**") 
-            .allowedOrigins("http://localhost:5173") // MUST match your Vite frontend URL
-            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Added OPTIONS
-            .allowedHeaders("*")
-            .allowCredentials(true);
+        registry.addMapping("/api/**") // Apply this configuration to all API routes
+            // IMPORTANT: Change this to the exact URL of your React app
+            .allowedOrigins("http://localhost:5173") 
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allowed HTTP methods
+            .allowedHeaders("*") // Allowed headers
+            .allowCredentials(true); // Allow sending credentials (like cookies)
     }
 }

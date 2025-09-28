@@ -6,7 +6,8 @@ const TodoForm = ({ onSubmit, onCancel, initialData, isEditing = false }) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
-    due_date: initialData?.due_date || '',
+    // ✅ FIX: Changed property name to match the Java backend model
+    dueDate: initialData?.dueDate || '',
     priority: initialData?.priority || 'medium',
     category: initialData?.category || '',
     status: initialData?.status || 'active'
@@ -29,12 +30,8 @@ const TodoForm = ({ onSubmit, onCancel, initialData, isEditing = false }) => {
 
     try {
       const result = await onSubmit(formData);
-      if (result.success) {
-        if (!isEditing) {
-          setFormData({ title: '', description: '', due_date: '', priority: 'medium', category: '', status: 'active' });
-        }
-        onCancel && onCancel();
-      } else {
+      // The parent component now handles closing the modal on success
+      if (!result.success) {
         setErrors([result.error || 'Failed to save todo']);
       }
     } catch (error) {
@@ -79,10 +76,13 @@ const TodoForm = ({ onSubmit, onCancel, initialData, isEditing = false }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Due Date */}
         <div>
-          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-2"><Calendar className="inline w-4 h-4 mr-1" />Due Date</label>
+          <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2"><Calendar className="inline w-4 h-4 mr-1" />Due Date</label>
           <input
-            type="date" id="due_date" value={formData.due_date}
-            onChange={(e) => handleChange('due_date', e.target.value)}
+            type="date"
+            // ✅ FIX: Changed id, value, and onChange handler to use 'dueDate'
+            id="dueDate"
+            value={formData.dueDate}
+            onChange={(e) => handleChange('dueDate', e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           />
         </div>

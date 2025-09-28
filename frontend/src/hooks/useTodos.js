@@ -1,102 +1,74 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSupabase } from './useSupabase';
+import api from '../config/api';
 
-export const useTodos = () => {
-  const [todos, setTodos] = useState([]); 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); 
-  const supabase = useSupabase();
+// The isLoggedIn parameter ensures we only fetch data when the user is logged in.
+export const useTodos = (isLoggedIn) => {
+    const [todos, setTodos] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-  const fetchTodos = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('todos')
-        .select('*')
-        .order('order_index', { ascending: true });
+    const fetchTodos = useCallback(async () => {
+        if (!isLoggedIn) {
+            setTodos([]); // Clear todos if not logged in
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await api.get('/api/todos'); // Ensure full path is used if needed
+            setTodos(response.data);
+        } catch (err) {
+            setError(err.response?.data || "Failed to load todos");
+        } finally {
+            setLoading(false);
+        }
+    }, [isLoggedIn]); // Dependency array includes isLoggedIn
 
-      if (error) throw error;
-      setTodos(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch todos');
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
+    const addTodo = useCallback(async (todoData) => {
+        try {
+            const response = await api.post('/api/todos', todoData);
+            setTodos((prev) => [...prev, response.data]);
+            // ✅ RETURN a success object
+            return { success: true, data: response.data };
+        } catch (err) {
+            const errorMsg = err.response?.data || "Failed to add todo";
+            setError(errorMsg);
+            // ✅ RETURN a failure object
+            return { success: false, error: errorMsg };
+        }
+    }, []);
 
-  const addTodo = useCallback(async (todoData) => { 
-    try {
-      const { data, error } = await supabase.from('todos').insert([todoData]);
-      if (error) throw error;
-      if (data) setTodos(prev => [data[0], ...prev]);
-      return { success: true, data: data?.[0] };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to add todo';
-      setError(message);
-      return { success: false, error: message };
-    }
-  }, [supabase]);
+    const updateTodo = useCallback(async (id, updatedFields) => {
+        try {
+            const response = await api.put(`/api/todos/${id}`, updatedFields);
+            setTodos((prev) =>
+                prev.map((t) => (t.id === id ? response.data : t))
+            );
+            // ✅ RETURN a success object
+            return { success: true, data: response.data };
+        } catch (err) {
+            const errorMsg = err.response?.data || "Failed to update todo";
+            setError(errorMsg);
+            // ✅ RETURN a failure object
+            return { success: false, error: errorMsg };
+        }
+    }, []);
 
-  const updateTodo = useCallback(async (id, updates) => { 
-    try {
-      const { data, error } = await supabase.from('todos').update(updates).eq('id', id);
-      if (error) throw error;
-      if (data) {
-        setTodos(prev => prev.map(todo => 
-          todo.id === id ? { ...todo, ...updates, updated_at: new Date().toISOString() } : todo
-        ));
-      }
-      return { success: true, data: data?.[0] };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update todo';
-      setError(message);
-      return { success: false, error: message };
-    }
-  }, [supabase]);
+    const deleteTodo = useCallback(async (id) => {
+        try {
+            await api.delete(`/api/todos/${id}`);
+            setTodos((prev) => prev.filter((t) => t.id !== id));
+            return { success: true };
+        } catch (err) {
+            const errorMsg = err.response?.data || "Failed to delete todo";
+            setError(errorMsg);
+            return { success: false, error: errorMsg };
+        }
+    }, []);
 
-  const deleteTodo = useCallback(async (id) => { 
-    try {
-      const { error } = await supabase.from('todos').delete().eq('id', id);
-      if (error) throw error;
-      setTodos(prev => prev.filter(todo => todo.id !== id));
-      return { success: true };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete todo';
-      setError(message);
-      return { success: false, error: message };
-    }
-  }, [supabase]);
+    useEffect(() => {
+        fetchTodos();
+    }, [fetchTodos]); // fetchTodos is stable due to its own dependency on isLoggedIn
 
-  const toggleTodo = useCallback(async (id) => { 
-    const todo = todos.find(t => t.id === id);
-    if (!todo) return { success: false, error: 'Todo not found' };
-
-    const newStatus = todo.status === 'completed' ? 'active' : 'completed';
-    return updateTodo(id, { status: newStatus });
-  }, [todos, updateTodo]);
-
-  const reorderTodos = useCallback(async (reorderedTodos) => { 
-    setTodos(reorderedTodos.map((todo, index) => ({
-        ...todo,
-        order_index: index,
-        updated_at: new Date().toISOString()
-    })));
-    return { success: true };
-  }, []);
-
-  useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
-
-  return {
-    todos,
-    loading,
-    error,
-    addTodo,
-    updateTodo,
-    deleteTodo,
-    toggleTodo,
-    reorderTodos,
-    refetch: fetchTodos
-  };
+    return { todos, loading, error, fetchTodos, addTodo, updateTodo, deleteTodo };
 };

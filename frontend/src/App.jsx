@@ -1,6 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { User, LogOut, BarChart } from 'lucide-react';
+// src/App.jsx
+
+import React, { useState, useMemo, useEffect } from 'react';
+import { User } from 'lucide-react';
+
+// 1. IMPORT THE HOOKS FOR AUTHENTICATION AND DATA
+import { useAuth } from './hooks/useAuth';
 import { useTodos } from './hooks/useTodos';
+import { useDashboard } from './hooks/useDashboard';
+
 import { filterTodos, sortTodos } from './utils/todoUtils';
 
 import LandingPage from './screens/LandingPage';
@@ -8,39 +15,61 @@ import AuthScreen from './screens/AuthScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import TodoListScreen from './screens/TodoListScreen';
-
 import Modal from './components/modal.jsx';
 import TodoForm from './components/TodoForm';
 
 function App() {
-  // --- Global State ---
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('demo_user');
-  const [page, setPage] = useState('landing'); // 'landing', 'login', 'signup', 'main', 'profile', 'dashboard'
+  // 2. USE THE AUTH HOOK FOR ALL AUTH-RELATED STATE AND FUNCTIONS
+  //    This replaces your old useState for isLoggedIn and username.
+  const {
+    isLoggedIn,
+    username,
+    authError,
+    login,
+    startSignup,
+    completeSignup,
+    logout,
+    checkLoginStatus,
+  } = useAuth();
 
-  // --- Todo State and Logic ---
-  const { todos, loading, error, addTodo, updateTodo, deleteTodo, toggleTodo, refetch } = useTodos();
+  // On initial load, check if the user is already logged in (from a previous session)
+  useEffect(() => {
+    checkLoginStatus();
+  }, [checkLoginStatus]);
+
+  // Client-side page navigation state
+  const [page, setPage] = useState('landing');
+
+  // --- Data Fetching Hooks (only run if logged in) ---
+  const { todos, loading, error, addTodo, updateTodo, deleteTodo } = useTodos(isLoggedIn);
+  const { stats, loading: dashboardLoading } = useDashboard(isLoggedIn);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   
-  // --- Filtering/Sorting State ---
   const [filter, setFilter] = useState({ status: 'all', priority: undefined, category: undefined, search: '' });
-  const [sort, setSort] = useState({ field: 'created_at', direction: 'asc' });
+  const [sort, setSort] = useState({ field: 'orderIndex', direction: 'asc' });
 
+  // Memoized calculations remain the same
   const allCategories = useMemo(() => [...new Set(todos.map(t => t.category).filter(Boolean))], [todos]);
-
   const filteredAndSortedTodos = useMemo(() => {
     let filtered = filterTodos(todos, filter);
     return sortTodos(filtered, sort);
   }, [todos, filter, sort]);
 
-  // --- Navigation Handlers ---
-  const handleLogin = () => { setIsLoggedIn(true); setPage('main'); };
-  const handleSignup = () => { setIsLoggedIn(true); setPage('main'); };
-  const handleLogout = () => { setIsLoggedIn(false); setPage('landing'); setUsername(''); };
-  const navigateTo = (p) => setPage(p);
+  // 3. CREATE A LOGOUT HANDLER THAT USES THE FUNCTION FROM THE HOOK
+  const handleLogout = () => {
+    logout();
+    setPage('landing'); // Navigate to landing page after logout
+  };
 
-  // --- Todo Action Handlers ---
+  // 4. USE AN EFFECT TO AUTOMATICALLY NAVIGATE WHEN LOGIN STATUS CHANGES
+  useEffect(() => {
+    if (isLoggedIn) {
+      setPage('main'); // If user becomes logged in, switch to the main app view
+    }
+  }, [isLoggedIn]);
+
   const handleEditOpen = (todo) => {
     setEditingTodo(todo);
     setIsModalOpen(true);
@@ -51,80 +80,83 @@ function App() {
     setEditingTodo(null);
   };
 
-  const handleUpdate = async (data) => {
-    if (editingTodo) {
-        // Prepare data: remove IDs/timestamps that shouldn't be updated directly
-        const { id, created_at, updated_at, order_index, ...updates } = data;
-        return updateTodo(editingTodo.id, updates);
+  const handleFormSubmit = async (data) => {
+    const action = editingTodo ? updateTodo(editingTodo.id, data) : addTodo(data);
+    const result = await action;
+    if (result.success) {
+      handleModalClose();
     }
-    return { success: false, error: 'No task selected for update.' };
+    // Errors will be handled by the respective hooks
   };
 
-
-  // --- Shared Layout (Navigation) ---
-  const MainLayout = ({ children }) => (
-    <div className="min-h-screen bg-gray-100">
-        <nav className="bg-white shadow-lg fixed w-full z-30">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    <h1 className="text-2xl font-extrabold text-blue-600">Aura Task</h1>
-                    <div className="flex items-center space-x-4">
-                        <button onClick={() => navigateTo('main')} className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${page === 'main' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}>Tasks</button>
-                        <button onClick={() => navigateTo('dashboard')} className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${page === 'dashboard' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}>Dashboard</button>
-                        <button onClick={() => navigateTo('profile')} className={`p-2 rounded-full transition-colors ${page === 'profile' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                            <User size={20} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-        <main className="pt-20 pb-8">{children}</main>
-    </div>
-  );
-  
-  // --- Render Logic ---
-  let content;
-  
-  if (!isLoggedIn) {
-    if (page === 'landing') {
-        content = <LandingPage onLogin={() => setPage('login')} onSignup={() => setPage('signup')} />;
-    } else { // 'login' or 'signup'
-        content = <AuthScreen onLogin={handleLogin} onSignup={handleSignup} setUsername={setUsername} />;
+  // --- RENDER LOGIC ---
+  const renderContent = () => {
+    if (!isLoggedIn) {
+      if (page === 'landing') {
+        return <LandingPage onLogin={() => setPage('login')} onSignup={() => setPage('signup')} />;
+      } else {
+        // 5. PASS THE CORRECT PROPS FROM THE useAuth HOOK TO AUTHSCREEN
+        return (
+          <AuthScreen
+            login={login}
+            startSignup={startSignup}
+            completeSignup={completeSignup}
+            authError={authError}
+          />
+        );
+      }
     }
-  } else if (page === 'profile') {
-    content = <ProfileScreen username={username} onLogout={handleLogout} />;
-  } else if (page === 'dashboard') {
-    content = <DashboardScreen todos={todos} />;
-  } else {
-    // 'main'
-    content = (
-        <TodoListScreen
+
+    // --- Logged In Views ---
+    switch (page) {
+      case 'profile':
+        return <ProfileScreen username={username} onLogout={handleLogout} />;
+      case 'dashboard':
+        return <DashboardScreen stats={stats} loading={dashboardLoading} />;
+      default: // 'main'
+        return (
+          <TodoListScreen
             todos={filteredAndSortedTodos}
             loading={loading} error={error}
             filter={filter} setFilter={setFilter}
             sort={sort} setSort={setSort}
             allCategories={allCategories}
             totalCount={todos.length}
-            onAddOpen={() => setIsModalOpen(true)}
+            onAddOpen={() => { setEditingTodo(null); setIsModalOpen(true); }}
             onEditOpen={handleEditOpen}
-            onToggle={toggleTodo}
             onDelete={deleteTodo}
-        />
-    );
-  }
+          />
+        );
+    }
+  };
 
+  // --- MAIN RETURN ---
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        {content}
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        {renderContent()}
       </div>
     );
   }
 
   return (
-    <MainLayout>
-      {content}
-      
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-white shadow-lg fixed w-full z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-2xl font-extrabold text-blue-600">Aura Task</h1>
+            <div className="flex items-center space-x-4">
+              <button onClick={() => setPage('main')} className={`px-3 py-1.5 rounded-lg font-medium ${page === 'main' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}>Tasks</button>
+              <button onClick={() => setPage('dashboard')} className={`px-3 py-1.5 rounded-lg font-medium ${page === 'dashboard' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}>Dashboard</button>
+              <button onClick={() => setPage('profile')} className={`p-2 rounded-full ${page === 'profile' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                <User size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <main className="pt-20 pb-8">{renderContent()}</main>
+
       {isModalOpen && (
         <Modal 
           title={editingTodo ? "Edit Task" : "Add New Task"} 
@@ -132,13 +164,12 @@ function App() {
         >
           <TodoForm
             initialData={editingTodo}
-            isEditing={!!editingTodo}
-            onSubmit={editingTodo ? handleUpdate : addTodo}
+            onSubmit={handleFormSubmit}
             onCancel={handleModalClose}
           />
         </Modal>
       )}
-    </MainLayout>
+    </div>
   );
 }
 
