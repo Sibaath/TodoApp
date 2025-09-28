@@ -8,7 +8,7 @@ export const useAuth = () => {
 
     const checkLoginStatus = useCallback(async () => {
         try {
-            const response = await api.get('/auth/profile');
+            const response = await api.get('api/auth/profile');
             if (response.status === 200) {
                 setUsername(response.data.username);
                 setIsLoggedIn(true);
@@ -25,7 +25,7 @@ export const useAuth = () => {
     const startSignup = useCallback(async (username) => {
         setAuthError(null);
         try {
-            const response = await api.post('/auth/signup', { username });
+            const response = await api.post('api/auth/signup', { username });
             // Return the challenge details to the AuthScreen
             return { success: true, challenge: response.data };
         } catch (error) {
@@ -40,7 +40,7 @@ export const useAuth = () => {
         setAuthError(null);
         try {
             // The submission includes all required fields for the backend
-            const response = await api.post('/auth/challenge/submit', signupData);
+            const response = await api.post('api/auth/challenge/submit', signupData);
 
             if (response.status === 200) {
                 setUsername(signupData.username);
@@ -60,7 +60,7 @@ export const useAuth = () => {
         setAuthError(null);
         try {
             // In the backend, 'passwordHash' field expects the raw password
-            const response = await api.post('/auth/login', {
+            const response = await api.post('api/auth/login', {
                 username,
                 passwordHash: password
             });

@@ -15,7 +15,7 @@ export const useDashboard = () => {
         setError(null);
         try {
             // This is the efficient backend endpoint for stats
-            const response = await api.get('/todos/dashboard/stats');
+            const response = await api.get('api/todos/dashboard/stats');
             setStats(response.data);
         } catch (err) {
             setError(err.response?.data || "Failed to load dashboard stats.");
